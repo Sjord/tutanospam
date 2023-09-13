@@ -7,30 +7,37 @@ window.tutanospam = (function() {
     const localStorageClassifierKey = "tutanospam.classifier";
 
     function learnFolder(folder, classifier, category) {
-        // TODO return promise
-        return tutao.locator.entityClient.loadRange(mailTypeRef, folder.mails, "zzzzzzzzzzzz", 1, true).then(function(mails) {
-            for (const mail of mails) {
-                // TODO skip unread mails in inbox
-                const text = getTokenText(mail);
-                classifier.learn(text, category);
-            }
+        return new Promise(function (doneLearning) {
+            const learnTasks = [];
+            tutao.locator.entityClient.loadRange(mailTypeRef, folder.mails, "zzzzzzzzzzzz", 200, true).then(function(mails) {
+                for (const mail of mails) {
+                    if (!(category === "ham" && mail.unread)) {
+                        const text = getTokenText(mail);
+                        learnTasks.push(classifier.learn(text, category));
+                    }
+                }
+                Promise.all(learnTasks).then(doneLearning);
+            });
         });
     }
 
     function getTokenText(mail) {
-        return [mail.subject, mail.sender.name, mail.firstRecipient.address].join(" ");
+        return [mail.subject || "emptySubjectToken", mail.sender.name, mail.firstRecipient.address].join(" ");
     }
 
     function learn() {
-        const classifier = getClassifier();
-        window.tutao.locator.mailModel.getMailboxDetails().then(function(mailboxDetails) {
-            const inbox = mailboxDetails[0].folders.getSystemFolderByType("1");
-            const spamFolder = mailboxDetails[0].folders.getSystemFolderByType("5");
-            return Promise.all([
-                learnFolder(inbox, classifier, "ham"),
-                learnFolder(spamFolder, classifier, "spam")
-            ]).then(function () {
-                classifier.save();
+        return new Promise(function (doneLearning) {
+            const classifier = new NaiveBayes();
+            window.tutao.locator.mailModel.getMailboxDetails().then(function(mailboxDetails) {
+                const inbox = mailboxDetails[0].folders.getSystemFolderByType("1");
+                const spamFolder = mailboxDetails[0].folders.getSystemFolderByType("5");
+                Promise.all([
+                    learnFolder(inbox, classifier, "ham"),
+                    learnFolder(spamFolder, classifier, "spam")
+                ]).then(function () {
+                    classifier.save();
+                    doneLearning();
+                });
             });
         });
     }
@@ -42,7 +49,6 @@ window.tutanospam = (function() {
         const spam = new Set();
         for (const [i, mail] of mails.entries()) {
             classifier.categorize(getTokenText(mail)).then(function (category) {
-                console.log(category, mail.subject);
                 if (category === "spam") {
                     spam.add(mail);
                 }
