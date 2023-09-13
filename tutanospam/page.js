@@ -65,8 +65,21 @@ window.tutanospam = (function() {
         if (fromStorage) {
             return fromJson(fromStorage);
         } else {
-            return new NaiveBayes();
+            return null;
         }
+    }
+
+    function addButton() {
+        const filterButton = document.querySelector('button[title="Filter"]');
+        if (!filterButton) {
+            return false;
+        }
+        const filterBar = filterButton.parentElement;
+        const spamButton = document.createElement("button");
+        spamButton.innerText = "Select spam";
+        spamButton.addEventListener("click", selectSpam);
+        filterBar.appendChild(spamButton);
+        return true;
     }
 
     // keys we use to serialize a classifier's state
@@ -338,8 +351,16 @@ window.tutanospam = (function() {
         localStorage.setItem(localStorageClassifierKey, this.toJson());
     };
 
+    function tryAddButton() {
+        if (addButton()) {
+            clearInterval(tryAddButtonInterval);
+        }
+    }
+    const tryAddButtonInterval = setInterval(tryAddButton, 1000);
+
     return {
         learn: learn,
         selectSpam: selectSpam,
+        addButton: addButton,
     };
 })();
