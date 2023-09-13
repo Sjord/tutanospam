@@ -7,13 +7,18 @@ window.tutanospam = (function() {
     const localStorageClassifierKey = "tutanospam.classifier";
 
     function learnFolder(folder, classifier, category) {
+        // TODO return promise
         return tutao.locator.entityClient.loadRange(mailTypeRef, folder.mails, "zzzzzzzzzzzz", 1, true).then(function(mails) {
             for (const mail of mails) {
                 // TODO skip unread mails in inbox
-                const text = [mail.subject, mail.sender.name, mail.firstRecipient.address].join(" ");
+                const text = getTokenText(mail);
                 classifier.learn(text, category);
             }
         });
+    }
+
+    function getTokenText(mail) {
+        return [mail.subject, mail.sender.name, mail.firstRecipient.address].join(" ");
     }
 
     function learn() {
@@ -28,6 +33,25 @@ window.tutanospam = (function() {
                 classifier.save();
             });
         });
+    }
+
+    function selectSpam() {
+        const classifier = getClassifier();
+        const listModel = tutao.currentView.mailViewModel.listModel;
+        const mails = listModel.state.unfilteredItems;
+        const spam = new Set();
+        for (const [i, mail] of mails.entries()) {
+            classifier.categorize(getTokenText(mail)).then(function (category) {
+                console.log(category, mail.subject);
+                if (category === "spam") {
+                    spam.add(mail);
+                }
+            });
+            if (i > 100) {
+                break;
+            }
+        }
+        listModel.updateState({selectedItems: spam, inMultiselect: true});
     }
 
     function getClassifier() {
@@ -310,5 +334,6 @@ window.tutanospam = (function() {
 
     return {
         learn: learn,
+        selectSpam: selectSpam,
     };
 })();

@@ -24,8 +24,9 @@ const spamFolder = d[0].folders.getSystemFolderByType("5");
 spamFolder.mails = Id mailListId
 entityClient.loadRange
 const mailTypeRef = {app: "tutanota", type: "Mail"};
-tutao.locator.entityClient.loadRange(mailTypeRef, spamFolder.mails, "zzzzzzzzzzzz", 1, true) => promise with mail array
-
+tutao.locator.entityClient.loadRange(mailTypeRef, spamFolder.mails, "zzzzzzzzzzzz", 1, true) => promise with mail array, most recent first
+reverse=true: id ("zz..zz" above) is not returned, but the next older mails are
+reverse=false: id is not returned, but the next newer mails are
 
 mail:
 - subject
@@ -39,3 +40,8 @@ mail:
 - id: IdTuple
     - 0: list ID
     - 1: element ID
+
+listModel.setFilter(mail => mail.isspam)
+tutao.currentView.mailViewModel.listModel.setFilter(mail => mail.subject == 'My subject')
+tutao.currentView.mailViewModel.listModel.state.unfilteredItems -> many cached mails of the currently viewed folder
+alternate mailviewmodel: tutao.locator.mailViewModel().then(mvm => window.mvm = mvm)
