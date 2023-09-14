@@ -110,7 +110,7 @@ window.tutanospam = (function() {
     // keys we use to serialize a classifier's state
     const STATE_KEYS = [
         'categories', 'docCount', 'totalDocuments', 'vocabulary', 'vocabularySize',
-        'wordCount', 'wordFrequencyCount', 'options'
+        'wordCount', 'wordFrequencyCount'
     ];
 
     /**
@@ -128,7 +128,7 @@ window.tutanospam = (function() {
             throw new Error('NaiveBayes.fromJson expects a valid JSON string.')
         }
         // init a new classifier
-        var classifier = new NaiveBayes(parsed.options)
+        var classifier = new NaiveBayes()
 
         // override the classifier's state
         STATE_KEYS.forEach(function(k) {
@@ -143,7 +143,6 @@ window.tutanospam = (function() {
 
     /**
      * Given an input string, tokenize it into an array of word tokens.
-     * This is the default tokenization function used if user does not provide one in `options`.
      *
      * @param  {String} text
      * @return {Array}
@@ -161,22 +160,9 @@ window.tutanospam = (function() {
      * Naive-Bayes Classifier
      *
      * This is a naive-bayes classifier that uses Laplace Smoothing.
-     *
-     * Takes an (optional) options object containing:
-     *   - `tokenizer`  => custom tokenization function
-     *
      */
-    function NaiveBayes(options) {
-        // set options object
-        this.options = {}
-        if (typeof options !== 'undefined') {
-            if (!options || typeof options !== 'object' || Array.isArray(options)) {
-                throw TypeError('NaiveBayes got invalid `options`: `' + options + '`. Pass in an object.')
-            }
-            this.options = options
-        }
-
-        this.tokenizer = this.options.tokenizer || defaultTokenizer
+    function NaiveBayes() {
+        this.tokenizer = defaultTokenizer
 
         //initialize our vocabulary and its size
         this.vocabulary = {}
