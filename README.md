@@ -1,6 +1,8 @@
 # Tutanospam
 
-A naive bayesian filter for learning and selecting spam client-side in Tutanota.
+A naive bayesian filter for learning and selecting spam client-side in Tutanota. This extension adds a "Select spam" button to the filter bar, and all spam emails are selected when clicked:
+
+![](screenshot.png)
 
 Uses [ttezel/bayes: Naive-Bayes Classifier for node.js](https://github.com/ttezel/bayes).
 
