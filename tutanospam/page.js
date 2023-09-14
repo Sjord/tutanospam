@@ -29,8 +29,7 @@ window.tutanospam = (function() {
                 console.log(`TutaNoSpam: Received ${mails.length} to learn as ${category}`);
                 for (const mail of mails) {
                     if (!(category === "ham" && mail.unread)) {
-                        const text = getTokenText(mail);
-                        learnTasks.push(classifier.learn(text, category));
+                        learnTasks.push(classifier.learn(mail, category));
 
                         if ((reverse && !newestMailId) || !reverse) {
                             newestMailId = mail._id[1];
@@ -43,10 +42,6 @@ window.tutanospam = (function() {
                 Promise.all(learnTasks).then(doneLearning);
             });
         });
-    }
-
-    function getTokenText(mail) {
-        return [mail.subject || "emptySubjectToken", mail.sender.name, mail.firstRecipient.address].join(" ");
     }
 
     function learn() {
@@ -73,7 +68,7 @@ window.tutanospam = (function() {
         const mails = listModel.state.unfilteredItems;
         const spam = new Set();
         for (const [i, mail] of mails.entries()) {
-            classifier.categorize(getTokenText(mail)).then(function (category) {
+            classifier.categorize(mail).then(function (category) {
                 if (category === "spam") {
                     spam.add(mail);
                 }
@@ -147,11 +142,11 @@ window.tutanospam = (function() {
      * @param  {String} text
      * @return {Array}
      */
-    var defaultTokenizer = function(text) {
+    function tokenizeText(text) {
         //remove punctuation from text - remove anything that isn't a word char or a space
         var rgxPunctuation = /[^(a-zA-ZA-Яa-я0-9_)+\s]/g
 
-        var sanitized = text.replace(rgxPunctuation, ' ')
+        var sanitized = text.toLowerCase().replace(rgxPunctuation, ' ')
 
         return sanitized.split(/\s+/)
     }
@@ -162,8 +157,6 @@ window.tutanospam = (function() {
      * This is a naive-bayes classifier that uses Laplace Smoothing.
      */
     function NaiveBayes() {
-        this.tokenizer = defaultTokenizer
-
         //initialize our vocabulary and its size
         this.vocabulary = {}
         this.vocabularySize = 0
@@ -186,6 +179,13 @@ window.tutanospam = (function() {
         this.categories = {}
     }
 
+    NaiveBayes.prototype.tokenizer = function (mail) {
+        return []
+            .concat(tokenizeText(mail.subject || "__emptySubject"))
+            .concat(tokenizeText(mail.sender.name))
+            .concat([mail.firstRecipient.address]);
+    };
+
     /**
      * Initialize each of our data structure entries for this new category
      *
@@ -203,12 +203,12 @@ window.tutanospam = (function() {
 
     /**
      * train our naive-bayes classifier by telling it what `category`
-     * the `text` corresponds to.
+     * the `mail` corresponds to.
      *
-     * @param  {String} text
+     * @param  {Mail} mail
      * @param  {Promise<String>} class
      */
-    NaiveBayes.prototype.learn = async function(text, category) {
+    NaiveBayes.prototype.learn = async function(mail, category) {
         var self = this
 
         //initialize category data structures if we've never seen this category
@@ -221,7 +221,7 @@ window.tutanospam = (function() {
         self.totalDocuments++
 
         //normalize the text into a word array
-        var tokens = self.tokenizer(text)
+        var tokens = self.tokenizer(mail)
 
         //get a frequency count for each token in the text
         var frequencyTable = self.frequencyTable(tokens)
@@ -255,17 +255,17 @@ window.tutanospam = (function() {
     }
 
     /**
-     * Determine what category `text` belongs to.
+     * Determine what category `mail` belongs to.
      *
-     * @param  {String} text
+     * @param  {Mail} mail
      * @return {Promise<string>} category
      */
-    NaiveBayes.prototype.categorize = async function(text) {
+    NaiveBayes.prototype.categorize = async function(mail) {
         var self = this,
             maxProbability = -Infinity,
             chosenCategory = null
 
-        var tokens = self.tokenizer(text)
+        var tokens = self.tokenizer(mail)
         var frequencyTable = self.frequencyTable(tokens)
 
         //iterate thru our categories to find the one with max probability for this text
