@@ -4,17 +4,41 @@ window.tutanospam = (function() {
         type: "Mail"
     };
 
-    const localStorageClassifierKey = "tutanospam.classifier";
+    const localStorageKeys = {
+        classifier: "tutanospam.classifier",
+        lastId: "tutanospam.lastId",
+    };
 
     function learnFolder(folder, classifier, category) {
         return new Promise(function (doneLearning) {
+            console.log(`TutaNoSpam: Learning ${category}...`);
+            const localStorageKey = localStorageKeys.lastId + "." + category;
+            let lastId = localStorage.getItem(localStorageKey);
+            let amount = 50;
+            let reverse = false;
+            if (!lastId) {
+                // Learn many most recent mails
+                reverse = true;
+                amount = 1000;
+                lastId = "zzzzzzzzzzzz";
+            }
+
             const learnTasks = [];
-            tutao.locator.entityClient.loadRange(mailTypeRef, folder.mails, "zzzzzzzzzzzz", 200, true).then(function(mails) {
+            let newestMailId = null;
+            tutao.locator.entityClient.loadRange(mailTypeRef, folder.mails, lastId, amount, reverse).then(function(mails) {
+                console.log(`TutaNoSpam: Received ${mails.length} to learn as ${category}`);
                 for (const mail of mails) {
                     if (!(category === "ham" && mail.unread)) {
                         const text = getTokenText(mail);
                         learnTasks.push(classifier.learn(text, category));
+
+                        if ((reverse && !newestMailId) || !reverse) {
+                            newestMailId = mail._id[1];
+                        }
                     }
+                }
+                if (newestMailId) {
+                    localStorage.setItem(localStorageKey, newestMailId);
                 }
                 Promise.all(learnTasks).then(doneLearning);
             });
@@ -27,7 +51,7 @@ window.tutanospam = (function() {
 
     function learn() {
         return new Promise(function (doneLearning) {
-            const classifier = new NaiveBayes();
+            const classifier = getClassifier();
             window.tutao.locator.mailModel.getMailboxDetails().then(function(mailboxDetails) {
                 const inbox = mailboxDetails[0].folders.getSystemFolderByType("1");
                 const spamFolder = mailboxDetails[0].folders.getSystemFolderByType("5");
@@ -36,6 +60,7 @@ window.tutanospam = (function() {
                     learnFolder(spamFolder, classifier, "spam")
                 ]).then(function () {
                     classifier.save();
+                    console.log('TutaNoSpam: Done learning!');
                     doneLearning();
                 });
             });
@@ -61,11 +86,11 @@ window.tutanospam = (function() {
     }
 
     function getClassifier() {
-        const fromStorage = window.localStorage.getItem(localStorageClassifierKey);
+        const fromStorage = window.localStorage.getItem(localStorageKeys.classifier);
         if (fromStorage) {
             return fromJson(fromStorage);
         } else {
-            return null;
+            return new NaiveBayes();
         }
     }
 
@@ -348,15 +373,16 @@ window.tutanospam = (function() {
     }
 
     NaiveBayes.prototype.save = function() {
-        localStorage.setItem(localStorageClassifierKey, this.toJson());
+        localStorage.setItem(localStorageKeys.classifier, this.toJson());
     };
 
-    function tryAddButton() {
+    function tryInitialize() {
         if (addButton()) {
-            clearInterval(tryAddButtonInterval);
+            clearInterval(tryInitializeInterval);
+            learn();
         }
     }
-    const tryAddButtonInterval = setInterval(tryAddButton, 1000);
+    const tryInitializeInterval = setInterval(tryInitialize, 1000);
 
     return {
         learn: learn,

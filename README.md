@@ -1,6 +1,6 @@
 # Tutanospam
 
-A naive bayesian filer for learning and selecting spam client-side in Tutanota.
+A naive bayesian filter for learning and selecting spam client-side in Tutanota.
 
 Uses [ttezel/bayes: Naive-Bayes Classifier for node.js](https://github.com/ttezel/bayes).
 
@@ -29,9 +29,9 @@ const spamFolder = d[0].folders.getSystemFolderByType("5");
 spamFolder.mails = Id mailListId
 entityClient.loadRange
 const mailTypeRef = {app: "tutanota", type: "Mail"};
-tutao.locator.entityClient.loadRange(mailTypeRef, spamFolder.mails, "zzzzzzzzzzzz", 1, true) => promise with mail array, most recent first
-reverse=true: id ("zz..zz" above) is not returned, but the next older mails are
-reverse=false: id is not returned, but the next newer mails are
+tutao.locator.entityClient.loadRange(mailTypeRef, spamFolder.mails, "zzzzzzzzzzzz", 1, true) => promise with mail array
+reverse=true: id ("zz..zz" above) is not returned, but the next older mails are, most recent first
+reverse=false: id is not returned, but the next newer mails are, oldest first
 ```
 
 mail:
