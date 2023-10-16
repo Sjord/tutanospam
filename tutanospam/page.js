@@ -105,10 +105,17 @@ window.tutanospam = (function() {
             return false;
         }
         const filterBar = filterButton.parentElement;
-        const spamButton = document.createElement("button");
-        spamButton.innerText = "Select spam";
-        spamButton.addEventListener("click", selectSpam);
-        filterBar.appendChild(spamButton);
+        const selectButton = document.createElement("button");
+        selectButton.innerText = "Select spam";
+        selectButton.setAttribute('class', 'pl');
+        selectButton.addEventListener("click", selectSpam);
+        filterBar.appendChild(selectButton);
+
+        const moveButton = document.createElement("button");
+        moveButton.innerText = "Move to spam";
+        moveButton.addEventListener("click", moveToSpam);
+        moveButton.setAttribute('class', 'pl');
+        filterBar.appendChild(moveButton);
         return true;
     }
 
