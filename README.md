@@ -36,6 +36,8 @@ reverse=true: id ("zz..zz" above) is not returned, but the next older mails are,
 reverse=false: id is not returned, but the next newer mails are, oldest first
 ```
 
+tutao.locator.mailModel.getMailboxDetails().then(details => inbox = details[0].folders.getSystemFolderByType("1"));
+
 mail:
 - subject
 - toRecipients[]

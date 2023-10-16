@@ -80,6 +80,16 @@ window.tutanospam = (function() {
         listModel.updateState({selectedItems: spam, inMultiselect: true});
     }
 
+    function moveToSpam() {
+        const mailModel = window.tutao.locator.mailModel;
+        mailModel.getMailboxDetails().then(function(mailboxDetails) {
+            const spamFolder = mailboxDetails[0].folders.getSystemFolderByType("5");
+            const listModel = tutao.currentView.mailViewModel.listModel;
+            const mails = listModel.getSelectedAsArray();
+            mailModel.moveMails(mails, spamFolder);
+        });
+    }
+
     function getClassifier() {
         const fromStorage = window.localStorage.getItem(localStorageKeys.classifier);
         if (fromStorage) {
@@ -374,5 +384,6 @@ window.tutanospam = (function() {
         learn: learn,
         selectSpam: selectSpam,
         addButton: addButton,
+        moveToSpam: moveToSpam
     };
 })();
