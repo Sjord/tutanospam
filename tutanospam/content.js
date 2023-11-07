@@ -1,6 +1,6 @@
 (function () {
     "use strict";
-    console.log("hello world");
+    console.log("TutaNoSpam: Loading...");
 
     const script = document.createElement('script');
     script.setAttribute('src', chrome.runtime.getURL('page.js'));
