@@ -6,6 +6,21 @@ A naive bayesian filter for learning and selecting spam client-side in Tutanota.
 
 Uses [ttezel/bayes: Naive-Bayes Classifier for node.js](https://github.com/ttezel/bayes).
 
+# Install
+
+1. Run `git clone https://github.com/Sjord/tutanospam.git`.
+2. In Chrome, go to the extensions page at `chrome://extensions/` or in the hamburger menu, "Extensions", "Manage Extensions".
+3. Enable "Developer mode" slider in the top-right corner.
+4. Click the "Load unpacked" button.
+5. Navigate to the tutanospam directory from step 1 and click "Select".
+
+# Usage
+
+1. Open Tutanota. The extension will learn from your messages as soon as the Tutanota app loads.
+2. In the top bar, two additional buttons appear, "Select spam" and "Move to spam".
+3. Click "Select spam" to select all messages that the filter thinks are spam.
+4. Click "Move to spam" to move the selected messages to spam.
+
 # Notes on Tutanota app
 
 - tutao
