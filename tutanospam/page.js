@@ -100,7 +100,7 @@ window.tutanospam = (function() {
     }
 
     function addButton() {
-        const filterButton = document.querySelector('button[title="Filter"]');
+        const filterButton = document.querySelector('button[aria-label="Filter"]');
         if (!filterButton) {
             return false;
         }
