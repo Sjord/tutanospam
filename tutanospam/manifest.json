@@ -1,6 +1,6 @@
 {
-    "version": "0.0.5",
-    "manifest_version": 2,
+    "version": "0.0.6",
+    "manifest_version": 3,
     "name": "TutaNoSpam",
     "description": "Spam filter for Tutanota",
     "content_scripts": [
@@ -14,9 +14,15 @@
             ]
         }
     ],
-    "permissions": [
+    "permissions": [],
+    "host_permissions": [
+        "https://mail.tutanota.com/*",
+        "https://app.tuta.com/*"
     ],
     "web_accessible_resources": [
-        "page.js"
+        {
+            "resources": ["page.js"],
+            "matches": ["https://mail.tutanota.com/*", "https://app.tuta.com/*"]
+        }
     ]
 }
