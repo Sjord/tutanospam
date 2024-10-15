@@ -47,7 +47,7 @@ window.tutanospam = (function() {
     function learn() {
         return new Promise(function (doneLearning) {
             const classifier = getClassifier();
-            window.tutao.locator.mailModel.getMailboxDetails().then(function(mailboxDetails) {
+            window.tutao.locator.mailboxModel.getMailboxDetails().then(function(mailboxDetails) {
                 const inbox = mailboxDetails[0].folders.getSystemFolderByType("1");
                 const spamFolder = mailboxDetails[0].folders.getSystemFolderByType("5");
                 Promise.all([
@@ -81,12 +81,11 @@ window.tutanospam = (function() {
     }
 
     function moveToSpam() {
-        const mailModel = window.tutao.locator.mailModel;
-        mailModel.getMailboxDetails().then(function(mailboxDetails) {
+        window.tutao.locator.mailboxModel.getMailboxDetails().then(function(mailboxDetails) {
             const spamFolder = mailboxDetails[0].folders.getSystemFolderByType("5");
             const listModel = tutao.currentView.mailViewModel.listModel;
             const mails = listModel.getSelectedAsArray();
-            mailModel.moveMails(mails, spamFolder);
+            window.tutao.locator.mailModel.moveMails(mails, spamFolder);
         });
     }
 
