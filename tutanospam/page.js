@@ -15,7 +15,7 @@ window.tutanospam = (function() {
     function getSystemFolderByType(type) {
         return new Promise(function (resolve) {
             tutao.currentView.mailViewModel.mailModel.getFolders().then(function (folders) {
-                const folder = folders.values().next().value;
+                const folder = folders.values().next().value.folders;
                 resolve(folder.getSystemFolderByType(type));
             });
         });
