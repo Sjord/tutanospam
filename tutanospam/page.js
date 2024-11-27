@@ -1,4 +1,7 @@
 window.tutanospam = (function() {
+    const INBOX = "1";
+    const SPAM = "5";
+
     const mailTypeRef = {
         app: "tutanota",
         type: "Mail"
@@ -8,6 +11,15 @@ window.tutanospam = (function() {
         classifier: "tutanospam.classifier",
         lastId: "tutanospam.lastId",
     };
+
+    function getSystemFolderByType(type) {
+        return new Promise(function (resolve) {
+            tutao.currentView.mailViewModel.mailModel.getFolders().then(function (folders) {
+                const folder = folders.values().next().value.folders;
+                resolve(folder.getSystemFolderByType(type));
+            });
+        });
+    }
 
     function learnFolder(folder, classifier, category) {
         return new Promise(function (doneLearning) {
@@ -25,7 +37,7 @@ window.tutanospam = (function() {
 
             const learnTasks = [];
             let newestMailId = null;
-            tutao.locator.entityClient.loadRange(mailTypeRef, folder.mails, lastId, amount, reverse).then(function(mails) {
+            tutao.currentView.mailViewModel.entityClient.loadRange(mailTypeRef, folder.mails, lastId, amount, reverse).then(function(mails) {
                 console.log(`TutaNoSpam: Received ${mails.length} to learn as ${category}`);
                 for (const mail of mails) {
                     if (!(category === "ham" && mail.unread)) {
@@ -47,9 +59,8 @@ window.tutanospam = (function() {
     function learn() {
         return new Promise(function (doneLearning) {
             const classifier = getClassifier();
-            window.tutao.locator.mailboxModel.getMailboxDetails().then(function(mailboxDetails) {
-                const inbox = mailboxDetails[0].folders.getSystemFolderByType("1");
-                const spamFolder = mailboxDetails[0].folders.getSystemFolderByType("5");
+            Promise.all([getSystemFolderByType(INBOX), getSystemFolderByType(SPAM)]).then(function (mailboxes) {
+                const [inbox, spamFolder] = mailboxes;
                 Promise.all([
                     learnFolder(inbox, classifier, "ham"),
                     learnFolder(spamFolder, classifier, "spam")
@@ -81,11 +92,10 @@ window.tutanospam = (function() {
     }
 
     function moveToSpam() {
-        window.tutao.locator.mailboxModel.getMailboxDetails().then(function(mailboxDetails) {
-            const spamFolder = mailboxDetails[0].folders.getSystemFolderByType("5");
+        getSystemFolderByType(SPAM).then(function(spamFolder) {
             const listModel = tutao.currentView.mailViewModel.listModel;
             const mails = listModel.getSelectedAsArray();
-            window.tutao.locator.mailModel.moveMails(mails, spamFolder);
+            tutao.currentView.mailViewModel.mailModel.moveMails(mails, spamFolder);
         });
     }
 
