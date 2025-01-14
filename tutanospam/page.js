@@ -88,7 +88,11 @@ window.tutanospam = (function() {
                 break;
             }
         }
-        listModel.updateState({selectedItems: spam, inMultiselect: true});
+
+        listModel.enterMultiselect();
+        for (const item of spam) {
+            listModel.onSingleInclusiveSelection(item);
+        }
     }
 
     function moveToSpam() {
