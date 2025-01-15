@@ -43,7 +43,7 @@ window.tutanospam = (function() {
 
         return new Promise(function (resolve) {
             entityClient.loadRange(mailSetEntryTypeRef, folder.entries, lastId, amount, reverse).then(function (mailSets) {
-                const newLastId = mailSets.map(m => m._id[1]).sort()[0];
+                const newLastId = mailSets.map(m => m._id[1]).sort().pop();
                 const listIds = [...new Set(mailSets.map(m => m.mail[0]))];
                 const promises = listIds.map(function (listId) {
                     const mailIds = mailSets.filter(m => m.mail[0] == listId).map(m => m.mail[1]);
