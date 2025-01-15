@@ -7,6 +7,11 @@ window.tutanospam = (function() {
         type: "Mail"
     };
 
+    const mailSetEntryTypeRef = {
+        app: "tutanota",
+        type: "MailSetEntry"
+    };
+
     const localStorageKeys = {
         classifier: "tutanospam.classifier",
         lastId: "tutanospam.lastId",
@@ -21,35 +26,51 @@ window.tutanospam = (function() {
         });
     }
 
+    function loadMails(folder, lastId) {
+        const entityClient = tutao.currentView.mailViewModel.entityClient;
+        let amount = 50;
+        let reverse = false;
+        if (!lastId) {
+            // Learn many most recent mails
+            reverse = true;
+            amount = 1000;
+            lastId = "zzzzzzzzzzzzzzzzzzzzzzzz";
+        }
+
+        if (!folder.isMailSet) {
+            console.warn("TutaNoSpam: this is not a mailset folder.");
+        }
+
+        return new Promise(function (resolve) {
+            entityClient.loadRange(mailSetEntryTypeRef, folder.entries, lastId, amount, reverse).then(function (mailSets) {
+                const newLastId = mailSets.map(m => m._id[1]).sort()[0];
+                const listIds = [...new Set(mailSets.map(m => m.mail[0]))];
+                const promises = listIds.map(function (listId) {
+                    const mailIds = mailSets.filter(m => m.mail[0] == listId).map(m => m.mail[1]);
+                    return entityClient.loadMultiple(mailTypeRef, listId, mailIds);
+                });
+                Promise.all(promises).then(mailLists => resolve([mailLists.flat(), newLastId]));
+            });
+        });
+    }
+
     function learnFolder(folder, classifier, category) {
         return new Promise(function (doneLearning) {
             console.log(`TutaNoSpam: Learning ${category}...`);
             const localStorageKey = localStorageKeys.lastId + "." + category;
             let lastId = localStorage.getItem(localStorageKey);
-            let amount = 50;
-            let reverse = false;
-            if (!lastId) {
-                // Learn many most recent mails
-                reverse = true;
-                amount = 1000;
-                lastId = "zzzzzzzzzzzz";
-            }
 
             const learnTasks = [];
-            let newestMailId = null;
-            tutao.currentView.mailViewModel.entityClient.loadRange(mailTypeRef, folder.mails, lastId, amount, reverse).then(function(mails) {
+
+            loadMails(folder, lastId).then(function ([mails, newLastId]) {
                 console.log(`TutaNoSpam: Received ${mails.length} to learn as ${category}`);
                 for (const mail of mails) {
                     if (!(category === "ham" && mail.unread)) {
                         learnTasks.push(classifier.learn(mail, category));
-
-                        if ((reverse && !newestMailId) || !reverse) {
-                            newestMailId = mail._id[1];
-                        }
                     }
                 }
-                if (newestMailId) {
-                    localStorage.setItem(localStorageKey, newestMailId);
+                if (newLastId) {
+                    localStorage.setItem(localStorageKey, newLastId);
                 }
                 Promise.all(learnTasks).then(doneLearning);
             });
@@ -400,6 +421,6 @@ window.tutanospam = (function() {
         learn: learn,
         selectSpam: selectSpam,
         addButton: addButton,
-        moveToSpam: moveToSpam
+        moveToSpam: moveToSpam,
     };
 })();
