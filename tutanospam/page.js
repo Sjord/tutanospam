@@ -98,21 +98,20 @@ window.tutanospam = (function() {
         const classifier = getClassifier();
         const listModel = tutao.currentView.mailViewModel.listModel;
         const mails = listModel.state.unfilteredItems;
-        const spam = new Set();
+        let inMultiSelect = false;
         for (const [i, mail] of mails.entries()) {
             classifier.categorize(mail).then(function (category) {
                 if (category === "spam") {
-                    spam.add(mail);
+                    if (!inMultiSelect) {
+                        listModel.enterMultiselect();
+                        inMultiSelect = true;
+                    }
+                    listModel.onSingleInclusiveSelection(mail);
                 }
             });
             if (i > 100) {
                 break;
             }
-        }
-
-        listModel.enterMultiselect();
-        for (const item of spam) {
-            listModel.onSingleInclusiveSelection(item);
         }
     }
 
